@@ -28,8 +28,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
-          # Use cache: maven if this is a Maven repo.
+          cache: maven
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -38,10 +37,10 @@ jobs:
           build-mode: manual
           queries: security-extended,security-and-quality
 
-      - name: Build all subprojects
+      - name: Build all Maven modules
         shell: bash
         run: |
-          ./gradlew clean build -x test
+          mvn -B clean package -DskipTests
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
