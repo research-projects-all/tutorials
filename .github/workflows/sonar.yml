@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   sonarcloud:
-    name: Build and analyze with SonarCloud
+    name: Analyze with SonarCloud
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
@@ -21,40 +21,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: maven
-
-      - name: Compile Maven projects
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mapfile -t poms < <(
-            find . -name pom.xml \
-              -not -path '*/target/*' \
-              -not -path './.git/*' \
-              | sort
-          )
-
-          for pom in "${poms[@]}"; do
-            dir="$(dirname "$pom")"
-            echo "Compiling $dir"
-
-            mvn -B -q -f "$pom" \
-              -DskipTests \
-              -Dmaven.compiler.release=17 \
-              -Dmaven.compiler.source=17 \
-              -Dmaven.compiler.target=17 \
-              clean compile
-          done
-
-          echo "Compiled classes:"
-          find . -path "*/target/classes/*" -name "*.class" | head -100
 
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v8.1.0
@@ -65,5 +31,5 @@ jobs:
             -Dsonar.organization=research-projects-all
             -Dsonar.projectKey=research-projects-all_tutorials
             -Dsonar.sources=.
-            -Dsonar.java.binaries=**/target/classes
-            -Dsonar.exclusions=**/target/**,**/.mvn/**,**/mvnw,**/mvnw.cmd
+            -Dsonar.exclusions=**/target/**,**/.mvn/**,**/mvnw,**/mvnw.cmd,apache-maven-4/**,**/src/test/**
+            -Dsonar.java.binaries=
