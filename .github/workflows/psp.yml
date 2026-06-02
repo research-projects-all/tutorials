@@ -1,0 +1,36 @@
+name: PSP Pedagogical Security Scan
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  psp:
+    name: Run Pedagogical SAST Profile
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Pedagogical SAST Profile PSP
+        uses: research-projects-all/Pedagogical-SAST-Profile-PSP@v2.0.0
+        with:
+          # This repository is Java/Spring only. Do not use auto here;
+          # PSP v2.0.0 can fall back to its combined profile, whose config
+          # is malformed for current Semgrep and causes:
+          # ValueError: unroll_dict called but object was actually str
+          framework: spring
+          scan-path: .
+          output-format: sarif
+          output-file: psp-results.sarif
+          fail-on-finding: false
