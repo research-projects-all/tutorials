@@ -10,7 +10,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze Java/Kotlin
+    name: Analyze Java
     runs-on: ubuntu-latest
 
     permissions:
@@ -23,41 +23,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: maven
-
-      - name: Inspect repository
-        shell: bash
-        run: |
-          echo "Current directory:"
-          pwd
-
-          echo "POM files:"
-          find . -maxdepth 5 -name pom.xml -print
-
-          echo "Java/Kotlin files:"
-          find . -maxdepth 8 -type f \( -name "*.java" -o -name "*.kt" \) | head -200
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin
-          build-mode: manual
+          build-mode: none
           queries: security-extended,security-and-quality
-
-      - name: Build Maven project for CodeQL
-        shell: bash
-        run: |
-          mvn -B -DskipTests clean compile
-
-          echo "Compiled class files:"
-          find . -path "*/target/classes/*" -name "*.class" | head -100
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:java-kotlin"
+          category: "/language:java"
