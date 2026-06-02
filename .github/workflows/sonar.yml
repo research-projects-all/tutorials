@@ -26,18 +26,35 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
           cache: maven
 
-      - name: Compile all Maven projects
+      - name: Compile Maven projects
         shell: bash
         run: |
           set -euo pipefail
 
-          find . -name pom.xml -not -path '*/target/*' | sort | while read -r pom; do
-            echo "Compiling $(dirname "$pom")"
-            mvn -B -q -f "$pom" -DskipTests clean compile
+          mapfile -t poms < <(
+            find . -name pom.xml \
+              -not -path '*/target/*' \
+              -not -path './.git/*' \
+              | sort
+          )
+
+          for pom in "${poms[@]}"; do
+            dir="$(dirname "$pom")"
+            echo "Compiling $dir"
+
+            mvn -B -q -f "$pom" \
+              -DskipTests \
+              -Dmaven.compiler.release=17 \
+              -Dmaven.compiler.source=17 \
+              -Dmaven.compiler.target=17 \
+              clean compile
           done
+
+          echo "Compiled classes:"
+          find . -path "*/target/classes/*" -name "*.class" | head -100
 
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v8.1.0
