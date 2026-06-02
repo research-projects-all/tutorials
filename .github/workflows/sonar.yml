@@ -1,0 +1,52 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  sonarcloud:
+    name: Build and analyze with SonarCloud
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compile all Maven projects
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          find . -name pom.xml -not -path '*/target/*' | sort | while read -r pom; do
+            echo "Compiling $(dirname "$pom")"
+            mvn -B -q -f "$pom" -DskipTests clean compile
+          done
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v8.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=research-projects-all
+            -Dsonar.projectKey=research-projects-all_tutorials
+            -Dsonar.sources=.
+            -Dsonar.java.binaries=**/target/classes
+            -Dsonar.exclusions=**/target/**,**/.mvn/**,**/mvnw,**/mvnw.cmd
